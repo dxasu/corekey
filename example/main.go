@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	corekey.KeyboardListen("core_dump01021504.tmp")
+	corekey.KeyboardListen("core_dump010215.tmp")
 
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
