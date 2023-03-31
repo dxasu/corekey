@@ -7,3 +7,6 @@ require (
 	github.com/atotto/clipboard v0.1.2
 	golang.org/x/sys v0.0.0-20201202213521-69691e467435
 )
+
+// Retract v1.3.0 because of os.Args err
+retract v1.3.0
