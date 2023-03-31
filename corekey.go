@@ -688,7 +688,7 @@ func getFileInfo(fileMode string) func() string {
         rate = 1
     }
 
-    extra := time.Now().Unix()%rate + 1
+    extra := time.Now().Unix() % rate
 
     return func() string {
         fileFlag := strconv.FormatInt((time.Now().Unix()-extra)/rate, 10)
