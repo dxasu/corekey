@@ -17,7 +17,7 @@ func main() {
 		return
 	}
 
-	corekey.PcListen("core_dump45.tmp", 0)
+	corekey.PcListen("core_dump3600.tmp", 0)
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 	<-sigs
