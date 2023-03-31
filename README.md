@@ -3,7 +3,8 @@
 ## Download Dependencies
 
 ```
-go install github.com/dxasu/corekey/example
+go get github.com/dxasu/corekey
+go install github.com/dxasu/corekey/cmd/corekey
 ```
 
 ## Compile
